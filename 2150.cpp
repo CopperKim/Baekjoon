@@ -1,59 +1,74 @@
 #include <iostream>
-#include <vector>
-#include <queue>
+#include <vector> 
+#include <queue> 
+#include <algorithm> 
+#include <string>
 
-using namespace std;
+using namespace std; 
 
-typedef vector<vector<int>> graph; 
+typedef vector<vector<int>> Graph;
 
-queue<vector<int>> ans; 
+void dfs_forward(int &start, Graph &G, vector<bool> &visited, vector<int> &popOrder) {
+    if (visited[start]) return; 
+    visited[start] = true; 
+    for(int next : G[start]) { 
+        dfs_forward(next, G, visited, popOrder); 
+    }
+    popOrder.push_back(start); 
+}
 
-void DFS(int first, vector<int>& SCC, vector<bool>& finished, graph& G) {
-    queue<int> Q; Q.push(first);
-    SCC[first] = first; 
+void dfs_reverse(int &start, Graph &G, vector<bool> &visited, priority_queue<int> &buffer) {
+    if (visited[start]) return; 
+    buffer.push(-start); 
+    visited[start] = true; 
+    for(int next : G[start]) { 
+        dfs_reverse(next, G, visited, buffer); 
+    }
+}
 
-    while(!Q.empty()) {
-        int cur = Q.front(); 
+void SCC() {
+    int V, E; cin >> V >> E;
+    
+    Graph G(V+1), G_r(V+1); 
 
-        for(int next : G[cur]) {
-            
-            if (SCC[next] == next) {
-                
-                ans.push(vector<int>()); 
-                
-                while(Q.front() != next) {
-                    ans.front().push_back(Q.front()); 
-                    Q.pop(); 
-                }
-                ans.front().push_back(Q.front()); 
-                Q.pop(); 
+    for(int i=0;i<E;i++) {
+        int a, b; cin >> a >> b;
+        G[a].push_back(b); 
+        G_r[b].push_back(a); 
+    }
 
-            }
+    vector<int> popOrder; 
+    vector<bool> visited(V+1, false), visited_r(V+1, false);
+    int SCC_count = 0; 
+    vector<priority_queue<int>> buffers; 
 
-            else 
+    for(int i=1;i<=V;i++) dfs_forward(i, G, visited, popOrder); 
+
+    for(int i=V-1;i>=0;i--) {
+        if (!visited_r[popOrder[i]]) {
+            buffers.push_back({}); 
+            dfs_reverse(popOrder[i], G_r, visited_r, buffers.back()); 
+            SCC_count++; 
         }
+    }
+
+    sort(buffers.begin(), buffers.end(), 
+        [](const priority_queue<int>& a, const priority_queue<int>& b){
+            return -a.top() < -b.top();
+        }
+    );
+
+    cout << SCC_count << '\n'; 
+
+    for(priority_queue<int> buffer : buffers) {
+        while(!buffer.empty()) {
+            cout << -buffer.top() << ' ';
+            buffer.pop(); 
+        }
+        cout << "-1\n"; 
     }
 }
 
 int main() {
-    int V, E ; cin >> V >> E; 
-    
-    graph G; 
-
-    for(int i=0;i<E;i++) {
-        int a, b; cin >> a >> b; 
-        G[a].push_back(b); 
-    }
-
-    vector<int> SCC(V+1);
-    vector<bool> finished(V+1); 
-
-    for(int i=1;i<=V;i++) {
-        SCC[i] = 0; 
-        finished[i] = false; 
-    }
-
-    for(int i=1;i<=V;i++) {
-        if (!finished[i]) DFS(i, SCC, finished, G); 
-    }
+    SCC(); 
 }
