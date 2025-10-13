@@ -35,7 +35,6 @@ int main() {
 
     vector<pair<int, int>> *G = new vector<pair<int, int>>[n+1];
     // 유향 가중치 그래프
-    bool *visited = new bool[n+1];
     // 다음 노드, 코스트
 
     for(int i=0;i<m;i++) {
